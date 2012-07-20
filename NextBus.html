@@ -1,0 +1,222 @@
+<html charset="utf-8" xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+		<style type="text/css">
+			body {
+				background: url("low_contrast_linen.png");
+			}
+
+			#main {
+				width: 1200px;
+				height: 500px;
+				margin: auto;
+				font-family:"Arial"
+			}
+
+			#routes {
+				margin-left: 55px;
+			}
+
+			.route {
+				background: #000;
+				width: 250px;
+				float: left;
+				margin: 10px;
+			}
+
+			.route {
+				background: -webkit-gradient(
+				    linear,
+				    left bottom,
+				    left top,
+				    color-stop(0, rgba(0,0,0,0.0)),
+				    color-stop(1, rgba(0,0,0,1.0))
+				);
+				margin-top: -10px;
+			}
+
+
+			#route_7 li {
+				background: inherit;
+				color: #E01B6A;
+			}
+
+			#route_11 li {
+				color: #1B70E0;
+			}
+
+			#route_9 li {
+				color: #BF1BE0;
+			}
+
+			#route_10 li {
+				color: #1BE01B;
+			}
+
+			#route_5 li {
+				color: #E0AF1B;
+			}			
+
+			.title {
+				font-weight: bold;
+				margin: auto;
+				margin-top: 20px;
+				text-align: center;
+				font-size: 84px;
+				color: white;
+				cursor: pointer;
+			}
+
+			ul {
+				list-style-type: none;
+				font-size: 48px;
+				font-weight: bold;
+				margin: auto;
+				margin-left: 22px;
+				line-height: 100px;
+				color: #eee;
+			}
+		</style>
+		<script type="text/javascript">
+			$(document).ready(function() {
+				window.notify_bus = null;
+				requestLineData();
+				setInterval(requestLineData, 15000);
+				$(".title").on("click", function(e) {
+					if ($(e.target).css("color") == "rgb(255, 255, 0)") {
+						$(e.target).css("color", "white");
+						window.notify_bus = null;
+					} else {
+						window.notify_bus = $(e.target).next(".predictions").find("li").first().attr("id");
+						$(".title").css("color", "white");
+						$(e.target).css("color", "yellow");
+					}
+				});				
+			})
+			function requestLineData() {
+				$.ajax({
+	  				url: "http://webservices.nextbus.com/service/publicXMLFeed?command=predictions&a=mbta&stopId=35",
+	  				method: "GET",
+	  				dataType: "html", 
+	  				success: function(data) {
+	  					update($($.parseXML(data)));
+	  				}
+	  			});
+			}
+			function update(data) {
+				predictions = data.find("predictions");
+				$("ul").empty();
+				$.each($(predictions[1]).find("prediction"), function(index, value) {
+					$("#route_7 ul").append("<li id=" + $(value).attr("tripTag") + ">" + parseTime($(value).attr("seconds")) + "</li>");
+				})
+				$.each($(predictions[0]).find("prediction"), function(index, value) {
+					$("#route_11 ul").append("<li id=" + $(value).attr("tripTag") + ">" + parseTime($(value).attr("seconds")) + "</li>");
+				})
+				$.each($(predictions[4]).find("prediction"), function(index, value) {
+					$("#route_9 ul").append("<li id=" + $(value).attr("tripTag") + ">" + parseTime($(value).attr("seconds")) + "</li>");
+				})
+				$.each($(predictions[2]).find("prediction"), function(index, value) {
+					$("#route_10 ul").append("<li id=" + $(value).attr("tripTag") + ">" + parseTime($(value).attr("seconds")) + "</li>");
+				})
+				// $.each($(predictions[3]).find("prediction"), function(index, value) {
+				// 	$("#route_5 ul").append("<li id=" + $(value).attr("tripTag") + ">" + parseTime($(value).attr("seconds")) + "</li>");
+				// })
+				notify();
+			}
+			function notify() {
+				prediction = $("#" + window.notify_bus);
+				if (prediction.length < 1){
+					window.notify_bus = null;
+					$(".title").css("color", "white");
+				} else {
+					readme("next " + $(prediction).parents(".route").first().find(".title").attr("routeid") + " bus in " + $(prediction).text());
+				}
+			}
+			function parseTime(total_seconds) {
+				minutes = Math.floor(total_seconds/60);
+				seconds = total_seconds % 60;
+				if (seconds < 10) {
+					seconds = "0" + seconds
+				}
+				return minutes + ":" + seconds;
+			}
+			function html5_audio(){
+				var a = document.createElement('audio');
+				return !!(a.canPlayType && a.canPlayType('audio/mpeg;').replace(/no/, ''));
+			}
+			var play_html5_audio = false;
+			if(html5_audio()) play_html5_audio = true;
+			function play_sound(url){
+				if(play_html5_audio){
+					var snd = new Audio(url);
+					snd.load();
+					snd.play();
+				} else {
+					$("#sound").remove();
+					var sound = $("<embed id='sound' type='audio/mpeg' />");
+					sound.attr('src', url);
+					sound.attr('loop', false);
+					sound.attr('hidden', true);
+					sound.attr('autostart', true);
+					$('body').append(sound);
+				}
+			}
+			function readme(txt){
+				play_sound("http://translate.google.com/translate_tts?ie=UTF-8&q="+encodeURIComponent(txt)+"&tl=en&total=1&idx=0prev=input");           
+			}		
+		</script>
+	</head>
+	<title>Next Bus: P St. & Broadway</title>
+	<body>
+		<div id="audio"></div>
+		<div id="main">
+			<div id="routes">
+				<div id="route_7" class="route">
+					<div class="title" routeid="7">
+						7
+					</div>
+					<div class="predictions">
+						<ul>
+						</ul>
+					</div>
+				</div>
+				<div id="route_11" class="route">
+					<div class="title" routeid="11">
+						11
+					</div>
+					<div class="predictions">
+						<ul>
+						</ul>				
+					</div>			
+				</div>
+				<div id="route_9" class="route">
+					<div class="title" routeid="9">
+						9
+					</div>
+					<div class="predictions">
+						<ul>
+						</ul>				
+					</div>			
+				</div>
+				<div id="route_10" class="route">
+					<div class="title" routeid="10">
+						10
+					</div>
+					<div class="predictions">
+						<ul>
+						</ul>				
+					</div>			
+				</div>
+			</div>
+<!-- 			<div id="route_5" class="route">
+				<div class="title" routeid="5">
+					5
+				</div>
+				<div class="predictions">
+					<ul>
+					</ul>				
+				</div>			
+			</div> -->
+		</div>
+	</body>
+</html>
